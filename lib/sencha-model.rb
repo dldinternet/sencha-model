@@ -17,9 +17,7 @@ end
 
 require 'bigdecimal'
 class BigDecimal
-  def to_record
-    alias_method :to_record, :to_f
-  end
+  alias_method :to_record, :to_f
 end
 
 
