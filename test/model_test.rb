@@ -163,6 +163,12 @@ class ModelTest < Test::Unit::TestCase
       assert_array_has_item(fields, 'has person_last') {|f| f[:name] === "person_last" and f[:mapping] == "person.last" }
       assert_array_has_item(fields, 'has person_first') {|f| f[:name] === "person_first" and f[:mapping] == "person.first" }
     end
+    should "produce ExtJS 4 compatible belongsTo associations in schema" do
+      schema = User.sencha_schema
+      assert schema[:associations].length > 0
+      # TODO fix Ext4 associations
+    end
+
     should "produce a valid to_record record" do
       person = Person.create!(:first => 'first', :last => 'last', :email => 'email')
       user = User.create!(:person_id => person.id, :password => 'password')
