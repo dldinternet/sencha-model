@@ -76,7 +76,7 @@ module Sencha
             :name => key.to_sym, 
             :type => type, 
             :class => assn.options[:polymorphic] ? nil : assn.klass,
-            :foreign_key => assn.association_foreign_key.to_sym,
+            :foreign_key => assn.foreign_key.to_sym,
             :is_polymorphic => !!assn.options[:polymorphic]
           }
           memo
