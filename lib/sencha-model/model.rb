@@ -50,6 +50,8 @@ module Sencha
           fields = self.class.process_fields(*options[:fields])
         end
         
+        alias_more = options[:alias_more] || {}
+
         assns   = self.class.sencha_associations
         pk      = self.class.sencha_primary_key
         
@@ -99,6 +101,8 @@ module Sencha
             value = value.to_record if value.respond_to? :to_record
           end
           data[field[:name]] = value
+          
+          data[alias_more[field[:name]]] = value if alias_more[field[:name]]
         end
         data
       end
