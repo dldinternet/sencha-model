@@ -78,7 +78,8 @@ module Sencha
                 end
                 
                 value = association.to_record :fields => assn_fields,
-                  :visited_classes => options[:visited_classes] + [self.class]
+                                              :visited_classes => options[:visited_classes] + [self.class],
+                                              :alias_more => alias_more
               else
                 value = {}
                 (field[:fields]||[]).each do |sub_field|
@@ -108,6 +109,8 @@ module Sencha
       end
     end
     
+
+
     ##
     # ClassMethods
     #
