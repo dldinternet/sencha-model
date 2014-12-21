@@ -1,4 +1,4 @@
 class Person < ActiveRecord::Base
   has_one :user
-  include ExtJS::Model
+  include Sencha::Model
 end

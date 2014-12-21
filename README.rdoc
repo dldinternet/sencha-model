@@ -1,59 +1,50 @@
-= mvc
+= Sencha::Model
 
-A collection of helpers, MVC mixins and PORs (plain-old-ruby-object) to assist with auto-generating ExtJS Stores (Ext.data.Store) including its associated DataReader (Ext.data.JsonReader, Ext.data.XmlReader) and DataWriter (Ext.data.JsonWriter, Ext.data.XmlWriter).  Also contains a helper for rendering javascript component definitions via partials.
+A simple Model mixin with adapters for various ORM frameworks such as ActiveRecord, DataMapper and MongoMapper.  Sencha::Model was originally created as part of the gem extjs-mvc[http://github.com/extjs/mvc] to assist with auto-generating ExtJS Stores (Ext.data.Store).  However, it can be useful for a variety of Javascript frameworks for rendering data on the client.
 
-See tutorial http://www.extjs.com/blog/2009/09/30/ext-js-on-rails-a-comprehensivetutorial/
 
-===Installation
-	% sudo gem install gemcutter
-	% gem tumble   (only have to do this once, adds gemcutter as primary gem-source)
-	% sudo gem install extjs-mvc
+=== Installation
+    % gem install sencha-model
 
-<b>Rails Installation:</b>
-In <tt>environment.rb</tt>, 
+or add the following line to your Rails Gemfile:
+    require 'sencha-model'
 
-    Rails::Initializer.run do |config|
-        config.gem "extjs-mvc"
-    end
+then run
+    bundle install
 
-<b>Merb installation:</b>
-In <tt>config/dependencies.rb</tt>, Add extjs-mvc as a new dependency
-	
-	dependency "extjs-mvc"
+=== An ORM Model mixin:  Sencha::Model
+sencha-model contains Model mixin named <tt>Sencha::Model</tt> which works for <b>three</b> popular ORM frameworks, ActiveRecord, DataMapper and MongoMapper.  The API for each framework is identical and an adapter can be created for just about any
+ORM in about an hour.
 
-=== An ORM Model mixin:  ExtJS::Model
-extjs-mvc contains Model mixin named <tt>ExtJS::Model</tt> which works for <b>three</b> popular ORM frameworks, ActiveRecord, DataMapper and MongoMapper.  The API for each framework is identical.
-
-Simply include the mixin into your model.  Use the class-method <tt>extjs_fields</tt> to specify those
-fields with will be used to render the <tt>Ext.data.Record.create</tt> field-def'n.
-
+Simply include the mixin into your model.  Use the class-method <tt>sencha_fields</tt> to specify those
+fields with will be used to render a record to Hash for later JSON-encoding.
   class User < ActiveRecord::Base
-    include ExtJS::Model
+    include Sencha::Model
 
-    extjs_fields :exclude => [:password, :password_confirmation]
-    
+    sencha_fields :exclude => [:password, :password_confirmation]
+
     # OR 
-    extjs_fields :name, :description
-    
+    sencha_fields :name, :description
+
     # OR
-    extjs_fields :only => [:name, :description] # actually the same as above
-    
+    sencha_fields :only => [:name, :description] # actually the same as above
+
     # OR
-    extjs_fields :additional => [:computed] # includes all database columns and an additional computed field
-    
+    sencha_fields :additional => [:computed] # includes all database columns and an additional computed field
+
     # OR define a column as a Hash
-    extjs_fields :description, :name => {"sortDir" => "ASC"}, :created_at => {"dateFormat" => "c"}
-	
+    sencha_fields :description, :name => {"sortDir" => "ASC"}, :created_at => {"dateFormat" => "c"}
+
     # OR render associations, association-fields will have their "mapping" property set automatically
-    extjs_fields :name, :description, :company => [:name, :description]
-    
+    sencha_fields :name, :description, :company => [:name, :description]
+
     def computed
       name.blank? ? login : name
     end
   end
 
-After including the model mixin <tt>ExtJS::Model</tt>, try typing the following in <tt>irb</tt> console:
-    >> User.extjs_record
+After including the model mixin <tt>Sencha::Model</tt>, try typing the following in <tt>irb</tt> console:
+    >> User.sencha_schema
     => { :idProperty=>"id", :fields=>[
          {:type=>'int', :allowBlank=>true, :name=>"id"},
          {:type=>'string', :allowBlank=>false, :name=>"first", :defaultValue => nil},
@@ -61,109 +52,47 @@ After including the model mixin <tt>ExtJS::Model</tt>, try typing the following 
          {:type=>'string', :allowBlank=>false, :name=>"email", :defaultValue => nil}
        ]}
 
-An auto-generated <tt>Ext.data.JsonReader</tt> configuration!
-
+An auto-generated schema. These field-names were originally designed to be consumed by an <tt>Ext.data.Store</tt> from the {Ext JS Framework}[http://extjs.com].
+TODO: make the field-names configurable.
 
 You can also define different sets of fields for different representations of your model.
 
 E.g. with the following definition:
-
     class User < ActiveRecord::Base
-      include ExtJS::Model
+      include Sencha::Model
 
-      extjs_fieldset :grid, fields => [:name, :description, :company => [:name, :description]]
-      extjs_fieldset :combo, [:full_name]
-  
+      sencha_fieldset :grid, [
+        :name, :description, {:company => [:name, :description]}
+      ]
+
+      sencha_fieldset :combo, [:full_name]
+
+      ##
+      # computed field
+      #
       def full_name
         "#{first_name} #{name}"
       end
     end
 
 You can get store configs for both representations with
-    User.extjs_record(:grid)
+    User.sencha_schema(:grid)
 or
-    User.extjs_record(:combo)
+    User.sencha_schema(:combo)
     
 And the corresponding data for the representations with
     User.first.to_record(:grid)
 or
     User.first.to_record(:combo)
 
-
-=== An ActionController mixin:  ExtJS::Controller
-The <tt>extjs-mvc</tt> Gem includes a framework agnostic Controller mixin which works with both Rails and Merb.  Include this mixin into any controller which will need to generate an <tt>Ext.data.Store</tt>.
-<b>usage:</b>
-
-    class UsersController < ActionController::Base
-        include ExtJS::Controller
-    end
-	
-=== View Helper:  ExtJS::Helpers::Component
-
-<b>usage:</b>
-
-    class UserController < ActionController::Base
-      include ExtJS::Controller
-      helper ExtJS::Helpers::Component
-    end
-
-Now render Ext components using helper method <tt>extjs_component</tt>
-
-    @viewport = extjs_component(
-      "xtype" => "viewport",
-      "frame" => true,
-      "layout" => "border")
-    @viewport.add("xtype" => "panel", "contentEl" => "hd", "region" => "north", "height" => 30)
-    @viewport.add(:partial => "/users/grid", "itemId" => "users-grid", "region" => "west")
-    @viewport.add(:partial => "/tasks/grid", "itemId" => "tasks-grid", "region" => "center")
-    @viewport.add("xtype" => "panel", "contentEl" => "ft", "region" => "south", "height" => 20)
-
-Note how it can also render partials.  Partials will be invoked with a local-variable named "container", a reference to the
-parent Ext::Component instance which added the partial.  If no "container" is specified, it would be expected that your partial
-would provide its own "renderTo" or "contentEl" property, just as in Ext.Component from ExtJS javascript library.
-
-
-=== View Helper:  ExtJS::Helpers::Store
-
-Renders an  Ext.data.Store with helper method <tt>extjs_store</tt>
-
-    class UserController < ActionController::Base
-      include ExtJS::Controller
-      helper ExtJS::Helpers::Store
-    end
-
-Now render a store in an erb template:
-
-    @store = extjs_store(
-      :controller => "users",
-			:fieldset => :grid,	# <-- Specify a particular fieldset as defined in the Model (used to render DataReader)
-      :proxy => "http"  # <-- default
-      :format => "json" # <-- default
-      :model => "user", # <-- default: controller_name.singularize
-      :writer => {:encode => false},
-      :config => {      # <-- standard Ext.data.Store config-params
-        "autoLoad" => true
-        "autoSave" => true
-      }
-    )
-
-    %= @store.render %
-
-=== A Testing Mixin:  ExtJS::TestMacros
-The <tt>extjs-mvc</tt> Gem includes a small set of testing macros to help unit-test models.
-This requires the 'Shoulda' gem from thoughtbot.  Include this mixin inside the
-<tt>ActiveSupport::TestCase</tt> class in <tt>test/test_helper.rb</tt>
+=== A Testing Mixin:  Sencha::TestMacros
+The <tt>sencha</tt> Gem includes a small set of testing macros to help unit-test models.
+Using this macro requires the 'Shoulda' gem from thoughtbot
 
 ==== Usage
-<tt>test/test_helper.rb</tt>
-    class ActiveSupport::TestCase
-      extend ExtJS::TestMacros
-      #...
-    end
-
 In individual model unit tests:
     class ModelTest < ActiveSupport::TestCase
-      should_require_extjs_fields :name, :email, :city
+      should_have_sencha_fields_for_fieldset :fieldset_name, [:name, :email, :city]
       #...
       #other tests
     end
@@ -182,4 +111,4 @@ In individual model unit tests:
 
 == Copyright
 
-Copyright (c) 2009 Chris Scott. See LICENSE for details.
+Copyright (c) 2009-2012 Chris Scott. See LICENSE for details.

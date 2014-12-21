@@ -1,28 +1,28 @@
 ##
-# MongoMapper adapter to ExtJS::Model mixin
+# MongoMapper adapter to Sencha::Model mixin
 #
     
-module ExtJS
+module Sencha
   module Model
     ##
     # ClassMethods
     #
     module ClassMethods
 
-      def extjs_primary_key
+      def sencha_primary_key
         :id
       end
 
-      def extjs_column_names
+      def sencha_column_names
         self.column_names
       end
 
-      def extjs_columns_hash
+      def sencha_columns_hash
         self.keys
       end
 
-      def extjs_associations
-        @extjs_associations ||= self.associations.inject({}) do |memo, (key, assn)|
+      def sencha_associations
+        @sencha_associations ||= self.associations.inject({}) do |memo, (key, assn)|
           memo[key.to_sym] = {
             :name => key.to_sym,
             :type => assn.type,
@@ -34,7 +34,7 @@ module ExtJS
         end
       end
 
-      def extjs_type(col)
+      def sencha_type(col)
         type = col.type.to_s
         case type
           when "DateTime", "Date", "Time"
@@ -50,11 +50,11 @@ module ExtJS
         end
       end
 
-      def extjs_allow_blank(col)
+      def sencha_allow_blank(col)
         (col.name == '_id') || (col.options[:required] != true)
       end
       
-      def extjs_default(col)
+      def sencha_default(col)
         col.default_value
       end
       
