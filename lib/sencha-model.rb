@@ -15,3 +15,9 @@ module Sencha
   end
 end
 
+require 'bigdecimal'
+class BigDecimal
+  alias_method :to_record, :to_f
+end
+
+
